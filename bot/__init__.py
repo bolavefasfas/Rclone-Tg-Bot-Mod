@@ -30,14 +30,27 @@ def getConfig(name: str):
 def get_client():
     return qbitClient(host="localhost", port=8090)
 
-uptime = time.time()
+uptime = time()
 DOWNLOAD_DIR = None
-
-GLOBAL_RCLONE= set()
-GLOBAL_TG_DOWNLOADER= set()
-GLOBAL_QBIT= set()
-
+status_dict = {}
+status_msg_dict = {}
 SessionVars = VarHolder()
+
+CONFIG_FILE_URL = environ.get('CONFIG_FILE_URL')
+try:
+    if len(CONFIG_FILE_URL) == 0:
+        raise TypeError
+    try:
+        res = rget(CONFIG_FILE_URL)
+        if res.status_code == 200:
+            with open('config.env', 'wb+') as f:
+                f.write(res.content)
+        else:
+            LOGGER.error(f"Failed to download config.env {res.status_code}")
+    except Exception as e:
+        LOGGER.error(f"CONFIG_FILE_URL: {e}")
+except TypeError:
+    pass
 
 CONFIG_FILE_URL = environ.get('CONFIG_FILE_URL')
 try:
