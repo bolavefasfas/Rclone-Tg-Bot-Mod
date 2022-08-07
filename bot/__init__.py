@@ -1,6 +1,7 @@
 __version__ = "2.0"
 __author__ = "Sam-Max"
 
+from collections import defaultdict
 from logging import getLogger, FileHandler, StreamHandler, INFO, basicConfig
 import os
 from time import sleep, time
@@ -32,7 +33,7 @@ def get_client():
 uptime = time()
 DOWNLOAD_DIR = None
 status_dict = {}
-status_msg_dict = {}
+status_msg_dict = defaultdict(lambda: [])
 SessionVars = VarHolder()
 
 CONFIG_FILE_URL = environ.get('CONFIG_FILE_URL')
