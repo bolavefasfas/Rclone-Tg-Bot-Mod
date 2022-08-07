@@ -37,7 +37,7 @@ class QbDownloader:
 
     async def add_qb_torrent(self, link):
         time_s= str(time()).replace(".","") 
-        self.__path= f'{DOWNLOAD_DIR}{time_s}'
+        self.__path= f'{DOWNLOAD_DIR}{time_s}/'
         self.client = get_client()
         try:
             if link.startswith('magnet:'):

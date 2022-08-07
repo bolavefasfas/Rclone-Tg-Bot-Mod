@@ -33,7 +33,7 @@ class AriaDownloader():
 
     async def execute(self):
         time_s= str(time.time()).replace(".","") 
-        path= f'{DOWNLOAD_DIR}{time_s}'
+        path= f'{DOWNLOAD_DIR}{time_s}/'
         if is_magnet(self._dl_link):
             err_message= "Not support for magnet links"
             return False, err_message, None  

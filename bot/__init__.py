@@ -5,7 +5,6 @@ from logging import getLogger, FileHandler, StreamHandler, INFO, basicConfig
 import os
 from time import sleep, time
 import sys
-import time
 from requests import get as rget
 from os import environ
 from dotenv import load_dotenv
