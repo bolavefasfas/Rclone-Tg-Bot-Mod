@@ -1,16 +1,17 @@
 
 from bot import status_dict
-from bot.downloaders.aria.aria_download import AriaDownloader
 from bot.downloaders.mega.mega_download import MegaDownloader
 
 
 async def handle_cancel(e):
    data = e.data.decode("UTF-8").split("_")
    if data[1] == "aria2":
-        hashid = data[2]
-        hashid = hashid.strip()
-        ar_down= AriaDownloader(None, None)
-        await ar_down.remove_dl(hashid)
+        gid = data[2]
+        gid = gid.strip()
+        for dl in list(status_dict.values()):
+          if dl.gid() == gid:
+               dl.cancel_download()
+               break  
    if data[1] == "megadl":  
         hashid = data[2]
         hashid = hashid.strip()

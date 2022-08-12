@@ -4,7 +4,7 @@ from requests import get
 from bot import LOGGER, MEGA_KEY
 from bot.core.get_vars import get_val
 from bot.core.set_vars import set_val
-from bot.downloaders.aria.aria_download import AriaDownloader
+from bot.downloaders.aria.aria2_download import Aria2Downloader
 from bot.downloaders.mega.mega_download import MegaDownloader
 from bot.downloaders.qbit.qbit_downloader import QbDownloader
 from bot.uploaders.rclone.rclone_mirror import RcloneMirror
@@ -87,8 +87,6 @@ async def mirror(client, message, isZip=False, extract=False, isQbit=False):
             else:
                 reply_text = replied_message.text     
                 link = reply_text.strip()
-                if not isQbit and (is_magnet(link) or link.endswith('.torrent')):
-                    return await message.reply_text("Use qbmirror command to mirror torrent or magnet link")
                 if is_gdrive_link(link):
                     return await message.reply_text("Not currently supported Google Drive links") 
                 elif is_mega_link(link):
@@ -114,13 +112,22 @@ async def mirror(client, message, isZip=False, extract=False, isQbit=False):
                             if str(e).startswith('ERROR:'):
                                 return await message.reply_text(str(e))
                     mess_age= await message.reply_text('Starting Download...')     
-                    aria2= AriaDownloader(link, mess_age)   
+                    aria2= Aria2Downloader(link, mess_age)   
                     state, msg, path= await aria2.execute()
                     if not state:
                         await mess_age.edit(msg)
                     else:
                         rclone_mirror= RcloneMirror(path, mess_age, tag)
                         await rclone_mirror.mirror()
+                if not isQbit and (is_magnet(link) or link.endswith('.torrent')):
+                    mess_age= await message.reply_text('Starting Download...')     
+                    aria2= Aria2Downloader(link, mess_age)   
+                    state, msg, path= await aria2.execute()
+                    if not state:
+                        await mess_age.edit(msg)
+                    else:
+                        rclone_mirror= RcloneMirror(path, mess_age, tag)
+                        await rclone_mirror.mirror()     
                 if isQbit and not is_magnet(reply_text):
                     if link.endswith('.torrent'):
                         content_type = None
