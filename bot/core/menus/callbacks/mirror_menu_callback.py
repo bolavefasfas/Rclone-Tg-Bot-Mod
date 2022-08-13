@@ -1,9 +1,9 @@
 import asyncio
 import os
 from bot import DOWNLOAD_DIR, LOGGER, TG_SPLIT_SIZE
-from bot.core.get_vars import get_val
 from pyrogram import filters
 from subprocess import run
+from bot.core.varholderwrap import get_val
 from bot.downloaders.telegram.telegram_downloader import TelegramDownloader
 from bot.uploaders.rclone.rclone_mirror import RcloneMirror
 from bot.utils.bot_utils.zip_utils import extract_archive

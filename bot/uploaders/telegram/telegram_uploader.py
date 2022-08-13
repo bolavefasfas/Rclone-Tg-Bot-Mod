@@ -34,7 +34,7 @@ class TelegramUploader():
         else:
            await self.__upload_file(self._path, status)
            await sleep(1)  
-        del status_dict[status.id] 
+        del status_dict[self._message.id] 
             
     async def __upload_file(self, up_path, status):
         try:

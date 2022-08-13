@@ -4,10 +4,8 @@
 #**************************************************/
 
 from pyrogram.types import InlineKeyboardButton
-from bot.core.get_vars import get_val
 from telethon.errors.rpcerrorlist import MessageNotModifiedError
 from pyrogram.types import InlineKeyboardMarkup
-from bot.core.menus.menu_myfiles import get_list_drive_results_myfiles, list_drive_myfiles
 
 
 async def next_page_myfiles(client, callback_query):
@@ -61,7 +59,7 @@ async def next_page_myfiles(client, callback_query):
 
     try:
         mmes= callback_query.message
-        def_rc_drive= get_val("DEFAULT_RCLONE_DRIVE")
+        def_rc_drive= get_val("RCLONE_DRIVE")
         base_dir= get_val("BASE_DIR")
         await mmes.edit(f"Your drive files are listed below\n\nPath:`{def_rc_drive}:{base_dir}`", reply_markup= InlineKeyboardMarkup(btn))
     except MessageNotModifiedError:

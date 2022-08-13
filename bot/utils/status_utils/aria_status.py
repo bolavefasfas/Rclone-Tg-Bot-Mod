@@ -3,6 +3,7 @@ from aria2p.client import ClientException
 from time import time
 from bot import EDIT_SLEEP_SECS, aria2, status_dict, LOGGER
 from bot.utils.bot_utils.human_format import get_readable_file_size
+from bot.utils.bot_utils.message_utils import sendMessage
 from bot.utils.status_utils.misc_utils import MirrorStatus, get_bottom_status
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors.exceptions import FloodWait, MessageNotModified
@@ -27,6 +28,7 @@ class AriaDownloadStatus:
             self.__download = get_download(self.__gid)
 
     async def create_status(self):
+          message= await sendMessage("Starting Download", self.__message)
           sleeps= False
           start = time()
           while True:
@@ -39,7 +41,7 @@ class AriaDownloadStatus:
                                    start = time()     
                                    try:
                                         data = "cancel_aria2_{}".format(self.__gid)
-                                        await self.__message.edit(update_message, reply_markup=(InlineKeyboardMarkup([
+                                        await message.edit(update_message, reply_markup=(InlineKeyboardMarkup([
                                                   [InlineKeyboardButton('Cancel', callback_data=data.encode("UTF-8"))]
                                                   ])))
                                    except FloodWait as fw:
@@ -50,17 +52,17 @@ class AriaDownloadStatus:
                               if sleeps:
                                    if self.__download.is_complete:
                                         del status_dict[self.id]
-                                        return True   
+                                        return True, "Download completed!"  
                                    sleeps = False
                                    await sleep(2)
                except ClientException as ex:
                     if " not found" in str(ex) or "'file'" in str(ex):
                          LOGGER.info("Download stopped by user!")     
-                         return False
+                         return False, "Download cancelled!"  
                except Exception as ex:
                     if " not found" in str(ex) or "'file'" in str(ex):
                          LOGGER.info("Download stopped by user!")   
-                         return False
+                         return False, "Download cancelled!"  
 
     def create_status_message(self):
         self.__update()
@@ -77,12 +79,12 @@ class AriaDownloadStatus:
         msg += "<b>Speed:</b> {}".format(self.__download.download_speed_string()) + "|" + "<b>ETA: {} Mins\n</b>".format(self.__download.eta_string())
         try:
             msg += f"<b>Seeders:</b> {self.__download.num_seeders}" 
-            msg += f" | <b>Peers:</b> {self.__download.connections}"
+            msg += f" | <b>Peers:</b> {self.__download.connections}\n"
         except:
             pass
         try:
             msg += f"<b>Seeders:</b> {self.__download.num_seeds}"
-            msg += f" | <b>Leechers:</b> {self.__download.num_leechs}"
+            msg += f" | <b>Leechers:</b> {self.__download.num_leechs}\n"
         except:
             pass
         msg += get_bottom_status()

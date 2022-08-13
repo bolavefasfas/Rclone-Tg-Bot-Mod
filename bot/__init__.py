@@ -16,7 +16,7 @@ from bot.client import RcloneTgClient
 from bot.core.var_holder import VarHolder
 from megasdkrestclient import MegaSdkRestClient, errors
 from pyrogram import Client
-from bot.conversation_pyrogram import Conversation
+from bot.conv_pyrogram import Conversation
 
 basicConfig(level= INFO,
     format= "%(asctime)s %(levelname)s %(threadName)s %(name)s %(message)s",
@@ -30,11 +30,15 @@ def getConfig(name: str):
 def get_client():
     return qbitClient(host="localhost", port=8090)
 
-uptime = time()
+botUptime = time()
+
 DOWNLOAD_DIR = None
+ALLOWED_CHATS= set()
+ALLOWED_USERS= set()
+
+var_holder = VarHolder()
 status_dict = {}
 status_msg_dict = defaultdict(lambda: [])
-SessionVars = VarHolder()
 
 load_dotenv('config.env', override=True)
 
@@ -45,11 +49,57 @@ try:
     RCLONE_CONFIG.strip()
     with open(os.path.join(os.getcwd(), "rclone.conf"), "wb") as file:
         file.write(bytes(RCLONE_CONFIG,'utf-8'))
-    LOGGER.info(f'Rclone file loaded!!') 
+    LOGGER.info(f'Rclone file loaded!') 
 except:
-    RCLONE_CONFIG = None
-    LOGGER.info(f'Failed to load rclone file.')     
+    LOGGER.info(f'Failed to load rclone file!')  
+    LOGGER.error("One or more env variables missing! Exiting now")
+    exit(1)
 
+try:
+    EDIT_SLEEP_SECS = getConfig('EDIT_SLEEP_SECS')
+    if len(EDIT_SLEEP_SECS) == 0:
+        raise KeyError
+    EDIT_SLEEP_SECS = int(EDIT_SLEEP_SECS)
+except:
+    EDIT_SLEEP_SECS = 10
+
+try:
+    UPTOBOX_TOKEN = getConfig('UPTOBOX_TOKEN')
+    if len(UPTOBOX_TOKEN) == 0:
+        raise KeyError
+except:
+    UPTOBOX_TOKEN = None
+
+try:
+    TORRENT_TIMEOUT = getConfig('TORRENT_TIMEOUT')
+    if len(TORRENT_TIMEOUT) == 0:
+        raise KeyError
+    TORRENT_TIMEOUT = int(TORRENT_TIMEOUT)
+except:
+    TORRENT_TIMEOUT = None
+
+try:
+    WEB_PINCODE = getConfig('WEB_PINCODE')
+    WEB_PINCODE = WEB_PINCODE.lower() == 'true'
+except:
+    WEB_PINCODE = False
+
+try:
+    BASE_URL = getConfig('BASE_URL_OF_BOT').rstrip("/")
+    if len(BASE_URL) == 0:
+        raise KeyError
+except:
+    LOGGER.warning('BASE_URL_OF_BOT not provided!')
+    BASE_URL = None
+
+try:
+    SERVER_PORT = getConfig('SERVER_PORT')
+    if len(SERVER_PORT) == 0:
+        raise KeyError
+except:
+    SERVER_PORT = 80
+
+Popen(f"gunicorn web.wserver:app --bind 0.0.0.0:{SERVER_PORT}", shell=True)
 srun(["qbittorrent-nox", "-d", "--profile=."])
 srun(["chmod", "+x", "aria.sh"])
 srun("./aria.sh", shell=True)
@@ -64,29 +114,29 @@ aria2 = ariaAPI(
 )
 
 try:
-    TORRENT_TIMEOUT = getConfig('TORRENT_TIMEOUT')
-    if len(TORRENT_TIMEOUT) == 0:
-        raise KeyError
-    TORRENT_TIMEOUT = int(TORRENT_TIMEOUT)
+    aid = getConfig('ALLOWED_CHATS')
+    aid = aid.split()
+    for _id in aid:
+        ALLOWED_CHATS.add(int(_id.strip()))
 except:
-    TORRENT_TIMEOUT = None
+    pass
 
 try:
-    EDIT_SLEEP_SECS = getConfig('EDIT_SLEEP_SECS')
-    if len(EDIT_SLEEP_SECS) == 0:
-        raise KeyError
-    EDIT_SLEEP_SECS = int(EDIT_SLEEP_SECS)
+    aid = getConfig('ALLOWED_USERS')
+    aid = aid.split()
+    for _id in aid:
+        ALLOWED_CHATS.add(int(_id.strip()))
 except:
-    EDIT_SLEEP_SECS = 10
+    pass
 
 try:
-    DOWNLOAD_DIR = getConfig('DOWNLOAD_DIR')
-    if not DOWNLOAD_DIR.endswith("/"):
-        DOWNLOAD_DIR = DOWNLOAD_DIR + '/'
     API_ID = int(getConfig("API_ID"))
     API_HASH = getConfig("API_HASH")
     BOT_TOKEN = getConfig("BOT_TOKEN")
-    
+    OWNER_ID= int(getConfig('OWNER_ID'))
+    DOWNLOAD_DIR = getConfig('DOWNLOAD_DIR')
+    if not DOWNLOAD_DIR.endswith("/"):
+        DOWNLOAD_DIR = DOWNLOAD_DIR + '/'
 except:
     LOGGER.error("One or more env variables missing! Exiting now")
     exit(1)

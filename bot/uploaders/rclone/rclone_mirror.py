@@ -2,23 +2,23 @@ from configparser import ConfigParser
 import os
 import subprocess
 from subprocess import Popen
-from bot import LOGGER 
-from bot.core.get_vars import get_val
+from bot import LOGGER
+from bot.core.varholderwrap import get_val
+from ...utils.bot_utils.message_utils import sendMessage 
 from bot.utils.status_utils.misc_utils import MirrorStatus, TelegramClient
 from bot.utils.status_utils.rclone_status import RcloneStatus
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from bot.utils.bot_utils.drive_utils import get_glink
-from bot.utils.bot_utils.misc_utils import clean,get_rclone_config, rename_file
-
+from bot.utils.bot_utils.misc_utils import clean, get_rclone_config, rename_file
 
 
 class RcloneMirror:
-    def __init__(self, path, user_msg, tag, new_name="", torrent_name="", is_rename=False):
+    def __init__(self, path, message, tag, new_name="", tor_name="", is_rename=False):
         self.__path = path
-        self.__user_msg = user_msg
+        self.__message = message
         self.__new_name = new_name
         self.__tag = tag
-        self.__tor_name= torrent_name
+        self.__tor_name= tor_name
         self.__is_rename = is_rename
         self.__dest_base = ""
         self.__dest_drive = ""
@@ -29,7 +29,7 @@ class RcloneMirror:
         conf_path = get_rclone_config()
         conf = ConfigParser()
         conf.read(conf_path)
-        self.__dest_drive = get_val('DEFAULT_RCLONE_DRIVE')
+        self.__dest_drive = get_val('RCLONE_DRIVE')
 
         if not os.path.exists(self.__path):
             LOGGER.info("Path does not not exist")
@@ -64,14 +64,16 @@ class RcloneMirror:
             cmd = ['rclone', 'copy', f"--config={conf_path}", str(self.__path),
                                 f"{self.__dest_drive}:{self.__dest_base}", '-P']
 
+        message = await sendMessage("Starting Download", self.__message)
         self.__rclone_pr = Popen(cmd, stdout=(subprocess.PIPE), stderr=(subprocess.PIPE))
-        rclone_status= RcloneStatus(self.__rclone_pr, self.__user_msg, name)
+        rclone_status= RcloneStatus(self.__rclone_pr, message, name)
         status= await rclone_status.progress(status_type=MirrorStatus.STATUS_UPLOADING, 
                         client_type=TelegramClient.PYROGRAM)
         if status:
             await self.__onDownloadComplete(conf_path, name)
         else:
-            clean(self.__path)      
+            await self.__onDownloadCancel()  
+               
           
     async def __onDownloadComplete(self, conf_path, name):    
           msg = f"<b>Name: </b><code>{name}</code>"
@@ -87,6 +89,7 @@ class RcloneMirror:
                     await self.__user_msg.edit(f"{msg}\n\n<b>cc: </b>{self.__tag}", reply_markup=(InlineKeyboardMarkup(button)))
                 else:
                     await self.__user_msg.edit(f"{msg}\n\n<b>cc: </b>{self.__tag}")
+                clean(self.__path)
           else:
                 if self.__is_gdrive:
                     gid = await get_glink(self.__dest_drive, self.__dest_base, os.path.basename(self.__path), conf_path, False)
@@ -96,5 +99,8 @@ class RcloneMirror:
                     await self.__user_msg.edit(f"{msg}\n\n<b>cc: </b>{self.__tag}", reply_markup=(InlineKeyboardMarkup(button)))
                 else:
                     await self.__user_msg.edit(f"{msg}\n\n<b>cc: </b>{self.__tag}")
-          #clean(self.__path)
-          
+                clean(self.__path)
+
+    async def __onDownloadCancel(self):
+        await self.__user_msg.edit('Process cancelled!')
+        clean(self.__path)    

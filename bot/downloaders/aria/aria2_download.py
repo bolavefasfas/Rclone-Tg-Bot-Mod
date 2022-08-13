@@ -3,7 +3,8 @@ from bot import DOWNLOAD_DIR, LOGGER
 from os import path as ospath
 from bot import aria2, status_dict
 from bot.utils.bot_utils.bot_utils import is_magnet
-from bot.utils.status_utils.aria_status import AriaDownloadStatus, get_download
+from bot.utils.bot_utils.message_utils import sendMessage
+from bot.utils.status_utils.aria_status import AriaDownloadStatus
 
 class Aria2Downloader():
     def __init__(self, link, message):
@@ -25,19 +26,17 @@ class Aria2Downloader():
        
         if download.error_message:
             error = str(download.error_message).replace('<', ' ').replace('>', ' ')
-            return False, error, None
-
-        if download is None:
-            error= "Error fetching link"
-            return False, error, None
+            await sendMessage(error, self.__message)
+            return False, None
 
         aria_status= AriaDownloadStatus(download.gid, self.__message)
-        status_dict[aria_status.id] = aria_status
-        LOGGER.info("Aria2Download started...")
-        status = await aria_status.create_status()
+        status_dict[self.id] = aria_status
+        LOGGER.info("Aria2 Download started...")
+        status, msg = await aria_status.create_status()
         if status:
             file_path = ospath.join(download.dir, download.name)
-            LOGGER.info(file_path)
-            return True, "Download Completed", file_path
+            await sendMessage(msg, self.__message)
+            return True, file_path
         else:
-            return False, "Download Stopped", None    
+            await sendMessage(msg, self.__message)     
+            return False, None    

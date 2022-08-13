@@ -4,7 +4,7 @@ from re import search
 from shutil import rmtree
 from pyrogram.errors import FloodWait
 from bot import DOWNLOAD_DIR, LOGGER, TG_SPLIT_SIZE, Bot, app
-from bot.core.get_vars import get_val
+from bot.core.varholderwrap import get_val
 from bot.utils.status_utils.extract_status import ExtractStatus
 from bot.utils.status_utils.misc_utils import MirrorStatus, TelegramClient
 from bot.utils.status_utils.rclone_status import RcloneStatus
@@ -40,7 +40,10 @@ class RcloneLeech:
         except:
             os.remove(path)
 
-    async def __onDownloadStart(self, origin_drive, conf_path):
+    async def execute(self):
+        origin_drive = get_val("RCLONE_DRIVE")
+        conf_path = get_rclone_config()
+        await self.__user_msg.edit("Starting download...")
         cmd = ['rclone', 'copy', f'--config={conf_path}', f'{origin_drive}:{self.__origin_path}', 
                           f'{self.__dest_path}', '-P']
         self.__rclone_pr = Popen(cmd, stdout=(PIPE),stderr=(PIPE))
@@ -49,13 +52,7 @@ class RcloneLeech:
         if status:
             await self.__onDownloadComplete()
         else:
-            await self.__onDownloadCancel()      
-
-    async def leech(self):
-        origin_drive = get_val("DEFAULT_RCLONE_DRIVE")
-        conf_path = get_rclone_config()
-        await self.__user_msg.edit("Starting download...")
-        await self.__onDownloadStart(origin_drive, conf_path)
+            await self.__onDownloadCancel()  
 
     async def __onDownloadComplete(self):
             if self.__folder:
@@ -146,10 +143,6 @@ class RcloneLeech:
                 msg += f'**Total Files:** {self.__total_files}'
             await self.__client.send_message(self.__chat_id, msg)  
     
-            
-    async def __onDownloadError(self):
-        pass
- 
     async def __onDownloadCancel(self):
         self.__rclone_pr.kill()
         await self.__user_msg.edit('Process cancelled!')  

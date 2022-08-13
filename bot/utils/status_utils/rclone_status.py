@@ -73,7 +73,7 @@ class RcloneStatus:
                                    await sleep(1)
                         if client_type == 'telethon':
                               try:
-                                   await self._user_message.edit(text=self.status_msg, 
+                                   await self._user_message.edit(text=self._status_msg, 
                                    buttons= [[Button.inline("Cancel", f"cancel_rclone_{self.id}".encode('UTF-8'))]])
                               except FloodWaitError as fw:
                                    LOGGER.warning(f"FloodWait : Sleeping {fw.seconds}s")
@@ -84,7 +84,7 @@ class RcloneStatus:
             if data == '':
                 blank += 1
                 if blank == 20:
-                    del status_dict[self.id]   
+                    del status_dict[self.id]
                     return True
             else:
                 blank = 0

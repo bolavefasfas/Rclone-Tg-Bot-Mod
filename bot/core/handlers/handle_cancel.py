@@ -1,6 +1,7 @@
 
-from bot import status_dict
+from bot import LOGGER, status_dict
 from bot.downloaders.mega.mega_download import MegaDownloader
+from bot.utils.bot_utils.misc_utils import getDownloadByGid
 
 
 async def handle_cancel(e):
@@ -13,29 +14,27 @@ async def handle_cancel(e):
                dl.cancel_download()
                break  
    if data[1] == "megadl":  
-        hashid = data[2]
-        hashid = hashid.strip()
-        mg_down = MegaDownloader(None, None)
-        await mg_down.remove_mega_dl(hashid)
+        gid = data[2]
+        gid = gid.strip()
+        dl = getDownloadByGid(gid)
+        await dl.cancel_download() 
    if data[1] == "qbitdl":
-        ext_hash = data[2]
-        ext_hash = ext_hash.strip()
-        for dl in list(status_dict.values()):
-           if dl.ext_hash == ext_hash:
-                dl.cancel_download()
-                break  
+        gid = data[2]
+        gid = gid.strip()
+        dl = getDownloadByGid(gid)
+        dl.cancel_download() 
    if data[1] == "rclone":
-        ext_hash= data[2]
-        ext_hash = int(ext_hash.strip())
+        hashid= data[2]
+        hashid = int(hashid.strip())
         for dl in list(status_dict.values()):
-            if dl.id == ext_hash:
+            if dl.id == hashid:
                 dl.cancelled = True
                 break 
    if data[1] == "telegram":
-     ext_hash = data[2]
-     ext_hash = int(ext_hash.strip())
+     hashid = data[2]
+     hashid = int(hashid.strip())
      for dl in list(status_dict.values()):
-          if dl.id == ext_hash:
+          if dl.id == hashid:
                dl.cancelled = True
                break 
         

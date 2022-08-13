@@ -17,3 +17,7 @@ class Commands:
     SPEEDTEST = "speedtest"
     RESTART= "restart"
     TEST= "test"
+
+
+
+   
